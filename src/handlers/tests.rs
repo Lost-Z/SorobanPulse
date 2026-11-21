@@ -5046,3 +5046,14 @@ async fn bulk_enable_returns_not_found_for_unknown_channel() {
     assert!(!results[0].success);
     assert!(results[0].error.as_deref().unwrap_or("").contains("not found"));
 }
+
+// Regression for fuzz_validate_tx_hash (Issue #1381): 64 *bytes* of non-ASCII
+// or mixed input must be rejected without panicking.
+#[test]
+fn validate_tx_hash_fuzz_regression_inputs() {
+    let cases = ["\u{0}".repeat(64), "é".repeat(32), format!("{}g", "a".repeat(63)), " ".repeat(64)];
+    for c in &cases {
+        assert!(validate_tx_hash(c).is_err(), "{c:?} should be rejected");
+    }
+    assert!(validate_tx_hash(&"aB".repeat(32)).is_ok());
+}
