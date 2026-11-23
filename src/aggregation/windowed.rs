@@ -1,10 +1,15 @@
+//! Windowed, per-subscription aggregation rules and group metrics
+//! (formerly `src/event_aggregation.rs`).
+
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::collections::HashMap;
+use tracing::{error, info, warn};
 use uuid::Uuid;
-use tracing::{info, error, warn};
+
+use super::{AggregationOp, NumericSummary};
 
 /// Aggregation window type
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -17,27 +22,10 @@ pub enum WindowType {
     Session, // Activity-based windows
 }
 
-/// Aggregation operation
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum AggregationOp {
-    #[serde(rename = "count")]
-    Count,
-    #[serde(rename = "sum")]
-    Sum,
-    #[serde(rename = "avg")]
-    Avg,
-    #[serde(rename = "min")]
-    Min,
-    #[serde(rename = "max")]
-    Max,
-    #[serde(rename = "distinct_count")]
-    DistinctCount,
-}
-
 /// Field selector for aggregation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FieldSelector {
-    pub path: String,  // JSONPath to the field
+    pub path: String, // JSONPath to the field
     pub operation: AggregationOp,
     pub alias: Option<String>,
 }
@@ -56,11 +44,11 @@ pub struct AggregationRule {
     pub subscription_id: Uuid,
     pub name: String,
     pub description: Option<String>,
-    pub window_type: String,        // tumbling, sliding, session
+    pub window_type: String, // tumbling, sliding, session
     pub window_size_secs: i32,
     pub slide_interval_secs: Option<i32>, // For sliding windows
-    pub fields: Value,              // JSON array of FieldSelector
-    pub group_by: Option<Value>,    // JSON array of GroupBy
+    pub fields: Value,                    // JSON array of FieldSelector
+    pub group_by: Option<Value>,          // JSON array of GroupBy
     pub filter_condition: Option<String>, // JSONPath filter
     pub enabled: bool,
     pub created_at: DateTime<Utc>,
@@ -121,13 +109,12 @@ pub async fn create_aggregation_rule(
     }
 
     // Validate subscription exists
-    let subscription_exists = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM subscriptions WHERE id = $1)"
-    )
-    .bind(subscription_id)
-    .fetch_one(pool)
-    .await
-    .map_err(|e| format!("Failed to validate subscription: {}", e))?;
+    let subscription_exists =
+        sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM subscriptions WHERE id = $1)")
+            .bind(subscription_id)
+            .fetch_one(pool)
+            .await
+            .map_err(|e| format!("Failed to validate subscription: {}", e))?;
 
     if !subscription_exists {
         return Err(format!("Subscription not found: {}", subscription_id));
@@ -227,8 +214,8 @@ pub async fn evaluate_aggregation_window(
     };
 
     // Parse field selectors
-    let field_selectors: Vec<FieldSelector> = serde_json::from_value(rule.fields.clone())
-        .unwrap_or_default();
+    let field_selectors: Vec<FieldSelector> =
+        serde_json::from_value(rule.fields.clone()).unwrap_or_default();
 
     // Compute aggregations
     let mut aggregated_data = json!({});
@@ -294,37 +281,21 @@ fn apply_filter(event: &Value, filter: &str) -> bool {
 }
 
 /// Compute aggregation operation on events
-fn compute_operation(
-    events: &[(Uuid, Value)],
-    selector: &FieldSelector,
-) -> Value {
+pub(super) fn compute_operation(events: &[(Uuid, Value)], selector: &FieldSelector) -> Value {
     let values: Vec<f64> = events
         .iter()
-        .filter_map(|(_, event)| {
-            event
-                .pointer(&selector.path)
-                .and_then(|v| v.as_f64())
-        })
+        .filter_map(|(_, event)| event.pointer(&selector.path).and_then(|v| v.as_f64()))
         .collect();
+
+    let summary = NumericSummary::from_values(&values);
 
     match selector.operation {
         AggregationOp::Count => json!(events.len()),
-        AggregationOp::Sum => {
-            json!(values.iter().sum::<f64>())
-        }
-        AggregationOp::Avg => {
-            if values.is_empty() {
-                json!(null)
-            } else {
-                json!(values.iter().sum::<f64>() / values.len() as f64)
-            }
-        }
-        AggregationOp::Min => {
-            json!(values.iter().copied().fold(f64::INFINITY, f64::min))
-        }
-        AggregationOp::Max => {
-            json!(values.iter().copied().fold(f64::NEG_INFINITY, f64::max))
-        }
+        AggregationOp::Sum => json!(summary.map_or(0.0, |s| s.sum)),
+        // No numeric values: null (as before, when ±infinity serialized to null).
+        AggregationOp::Avg => json!(summary.map(|s| s.avg())),
+        AggregationOp::Min => json!(summary.map(|s| s.min)),
+        AggregationOp::Max => json!(summary.map(|s| s.max)),
         AggregationOp::DistinctCount => {
             let mut seen = std::collections::HashSet::new();
             for (_, event) in events {
@@ -421,7 +392,8 @@ impl AggregationOptimizer {
         window_start: DateTime<Utc>,
         window_end: DateTime<Utc>,
     ) {
-        self.pending.push((rule_id, subscription_id, window_start, window_end));
+        self.pending
+            .push((rule_id, subscription_id, window_start, window_end));
     }
 
     /// Evaluate all queued windows in batches and return the results.
@@ -506,34 +478,25 @@ pub fn compute_group_metrics(
 
         *group_counts.entry(key_value.clone()).or_insert(0) += 1;
 
-        group_distinct
-            .entry(key_value.clone())
-            .or_default()
-            .insert(
-                event
-                    .pointer(&pointer)
-                    .map(|v| v.to_string())
-                    .unwrap_or_default(),
-            );
+        group_distinct.entry(key_value.clone()).or_default().insert(
+            event
+                .pointer(&pointer)
+                .map(|v| v.to_string())
+                .unwrap_or_default(),
+        );
     }
 
     groups
         .into_iter()
         .map(|(group_key, values)| {
             let event_count = *group_counts.get(&group_key).unwrap_or(&0);
-            let distinct_count = group_distinct
-                .get(&group_key)
-                .map(|s| s.len() as i64);
+            let distinct_count = group_distinct.get(&group_key).map(|s| s.len() as i64);
 
-            let (avg_value, min_value, max_value, sum_value) = if values.is_empty() {
-                (None, None, None, None)
-            } else {
-                let sum: f64 = values.iter().sum();
-                let avg = sum / values.len() as f64;
-                let min = values.iter().copied().fold(f64::INFINITY, f64::min);
-                let max = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-                (Some(avg), Some(min), Some(max), Some(sum))
-            };
+            let summary = NumericSummary::from_values(&values);
+            let avg_value = summary.map(|s| s.avg());
+            let min_value = summary.map(|s| s.min);
+            let max_value = summary.map(|s| s.max);
+            let sum_value = summary.map(|s| s.sum);
 
             GroupMetrics {
                 group_key,
@@ -553,10 +516,7 @@ pub fn compute_group_metrics(
 }
 
 /// Persist computed group metrics to the `group_metrics` table.
-pub async fn save_group_metrics(
-    pool: &PgPool,
-    metrics: &[GroupMetrics],
-) -> Result<(), String> {
+pub async fn save_group_metrics(pool: &PgPool, metrics: &[GroupMetrics]) -> Result<(), String> {
     for m in metrics {
         sqlx::query(
             "INSERT INTO group_metrics (
@@ -717,7 +677,10 @@ mod tests {
             window_type: WindowType::Tumbling,
         };
         let result = compute_group_metrics(rule_id, sub_id, now, now, &[], &config);
-        assert!(result.is_empty(), "No events should produce no group metrics");
+        assert!(
+            result.is_empty(),
+            "No events should produce no group metrics"
+        );
     }
 
     #[test]
@@ -732,9 +695,18 @@ mod tests {
         };
 
         let events: Vec<(Uuid, serde_json::Value)> = vec![
-            (Uuid::new_v4(), json!({ "contract_id": "CA1", "amount": 10.0 })),
-            (Uuid::new_v4(), json!({ "contract_id": "CA1", "amount": 20.0 })),
-            (Uuid::new_v4(), json!({ "contract_id": "CA2", "amount": 5.0 })),
+            (
+                Uuid::new_v4(),
+                json!({ "contract_id": "CA1", "amount": 10.0 }),
+            ),
+            (
+                Uuid::new_v4(),
+                json!({ "contract_id": "CA1", "amount": 20.0 }),
+            ),
+            (
+                Uuid::new_v4(),
+                json!({ "contract_id": "CA2", "amount": 5.0 }),
+            ),
         ];
 
         let metrics = compute_group_metrics(rule_id, sub_id, now, now, &events, &config);

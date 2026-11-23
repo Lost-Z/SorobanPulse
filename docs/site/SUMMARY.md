@@ -124,6 +124,7 @@
 
 ## API
 
+- [API Reference (generated from OpenAPI)](../api-reference.md)
 - [API Guide](../reference/api-guide.md)
 - [API Usage Guide](../guides/api-usage.md)
 - [API Cookbook](../guides/api-cookbook.md)
@@ -306,7 +307,22 @@
   - [0002 — Single-writer indexing with monitored read replicas](../development/adr/0002-multi-replica-indexing.md)
   - [0003 — Layered retry, backoff, and circuit breaking for webhook delivery](../development/adr/0003-webhook-retry-strategy.md)
   - [0004 — Optional gzip compression for stored event data](../development/adr/0004-event-compression.md)
+  - [0005 — Axum as the HTTP web framework](../development/adr/0005-web-framework.md)
+  - [0006 — Canonical frontend](../development/adr/0006-canonical-frontend.md)
+  - [0007 — SDK packaging and distribution](../development/adr/0007-sdk-packaging.md)
+  - [0008 — Tenancy model](../development/adr/0008-tenancy-model.md)
+  - [0009 — Lua scripting sandbox for transforms](../development/adr/0009-scripting-sandbox.md)
+  - [0010 — Event storage and partitioning strategy](../development/adr/0010-event-storage-partitioning.md)
+  - [0011 — Telemetry stack](../development/adr/0011-telemetry-stack.md)
+  - [0012 — Feature-flag strategy](../development/adr/0012-feature-flag-strategy.md)
+  - [0013 — Aggregation merge](../development/adr/0013-aggregation-merge.md)
+  - [0014 — Cargo workspace layout](../development/adr/0014-cargo-workspace.md)
+  - [0015 — Connection pool consolidation](../development/adr/0015-connection-pool-consolidation.md)
   - [ADR review guidelines](../development/adr/review-guidelines.md)
+
+### Development
+
+- [CI Workflow Overview](../development/ci.md)
 
 ### Testing
 
