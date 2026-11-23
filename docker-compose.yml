@@ -90,7 +90,7 @@ services:
     <<: *postgres-common
     profiles: ["core", "e2e", "conformance"]
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -107,6 +107,50 @@ services:
       PORT: "3000"
       RUST_LOG: ${RUST_LOG:-info}
 
+  # Conformance-only app instance: same image as `app` but pointed at the
+  # seeded conformance database and the webhook sink.
+  conformance-app:
+    build: .
+    depends_on:
+      conformance-db:
+        condition: service_healthy
+      webhook-sink:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://soroban:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@conformance-db:5432/soroban_pulse
+      STELLAR_RPC_URL: ${STELLAR_RPC_URL:-https://soroban-testnet.stellar.org}
+      START_LEDGER: ${START_LEDGER:-0}
+      PORT: "3000"
+      RUST_LOG: ${RUST_LOG:-info}
+      WEBHOOK_URL: http://webhook-sink:9002/hooks
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?set WEBHOOK_SECRET in .env}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/healthz/ready || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # Conformance-only PostgreSQL instance, seeded from sdk/conformance/seed.sql.
+  conformance-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: soroban
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: soroban_pulse
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - conformance_pgdata:/var/lib/postgresql/data
+      - ./sdk/conformance/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U soroban -d soroban_pulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # ---------------------------------------------------------------------------
   # observability
   # ---------------------------------------------------------------------------
@@ -118,7 +162,7 @@ services:
       - "--storage.tsdb.path=/prometheus"
       - "--web.enable-lifecycle"
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./docs/alerts.yml:/etc/prometheus/alerts.yml:ro
@@ -132,10 +176,10 @@ services:
     profiles: ["observability"]
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
       GF_USERS_ALLOW_SIGN_UP: "false"
     ports:
-      - "3001:3000"
+      - "127.0.0.1:3001:3000"
     volumes:
       - grafanadata:/var/lib/grafana
       - ./docs/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -177,7 +221,7 @@ services:
     profiles: ["observability"]
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redisdata:/data
     healthcheck:
@@ -270,3 +314,4 @@ volumes:
   grafanadata:
   redisdata:
   lokidata:
+  conformance_pgdata:

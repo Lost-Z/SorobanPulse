@@ -123,6 +123,7 @@
 
 ## API
 
+- [API Reference (generated from OpenAPI)](../api-reference.md)
 - [API Guide](../api-guide.md)
 - [API Usage Guide](../api-usage.md)
 - [API Cookbook](../api-cookbook.md)
@@ -310,7 +311,22 @@
   - [0002 — Single-writer indexing with monitored read replicas](../adr/0002-multi-replica-indexing.md)
   - [0003 — Layered retry, backoff, and circuit breaking for webhook delivery](../adr/0003-webhook-retry-strategy.md)
   - [0004 — Optional gzip compression for stored event data](../adr/0004-event-compression.md)
+  - [0005 — Axum as the HTTP web framework](../adr/0005-web-framework.md)
+  - [0006 — Canonical frontend](../adr/0006-canonical-frontend.md)
+  - [0007 — SDK packaging and distribution](../adr/0007-sdk-packaging.md)
+  - [0008 — Tenancy model](../adr/0008-tenancy-model.md)
+  - [0009 — Lua scripting sandbox for transforms](../adr/0009-scripting-sandbox.md)
+  - [0010 — Event storage and partitioning strategy](../adr/0010-event-storage-partitioning.md)
+  - [0011 — Telemetry stack](../adr/0011-telemetry-stack.md)
+  - [0012 — Feature-flag strategy](../adr/0012-feature-flag-strategy.md)
+  - [0013 — Aggregation merge](../adr/0013-aggregation-merge.md)
+  - [0014 — Cargo workspace layout](../adr/0014-cargo-workspace.md)
+  - [0015 — Connection pool consolidation](../adr/0015-connection-pool-consolidation.md)
   - [ADR review guidelines](../adr/review-guidelines.md)
+
+### Development
+
+- [CI Workflow Overview](../development/ci.md)
 
 ### Testing
 
@@ -337,9 +353,6 @@
 
 ### Engineering Plans
 
-- [Aggregation Merge Plan](../aggregation-merge-plan.md)
-- [Cargo Workspace Plan](../cargo-workspace-plan.md)
-- [Connection Pool Consolidation](../connection-pool-consolidation.md)
 - [Feature Gate Plan](../feature-gate-plan.md)
 - [Handler Split Plan](../handler-split-plan.md)
 - [Module Pruning Audit](../module-pruning-audit.md)

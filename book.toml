@@ -16,9 +16,11 @@ git-repository-url = "https://github.com/Soroban-Pulse/SorobanPulse"
 git-repository-icon = "fa-github"
 edit-url-template = "https://github.com/Soroban-Pulse/SorobanPulse/edit/main/{path}"
 no-section-label = false
-additional-css = []
-additional-js = []
+additional-css = ["docs/theme/custom.css"]
+additional-js = ["docs/theme/edit-link.js"]
 cname = ""
+default-theme = "light"
+preferred-dark-theme = "navy"
 
 [output.html.search]
 enable = true
