@@ -105,8 +105,6 @@
 ### Advanced
 
 - [Multi-Tenant Access Isolation](../multi-tenancy.md)
-- [SaaS Platform & Multi-Tenant Hosting](../SAAS_PLATFORM.md)
-- [AI/ML Integration & Intelligence Features](../ML_INTEGRATION.md)
 - [ML Model Serving](../ml-model-serving.md)
 - [Quantum-Ready Cryptography](../quantum-cryptography.md)
 - [Edge Computing & CDN Integration Guide](../edge-computing-guide.md)
@@ -123,6 +121,7 @@
 
 ## API
 
+- [API Reference (generated from OpenAPI)](../api-reference.md)
 - [API Guide](../api-guide.md)
 - [API Usage Guide](../api-usage.md)
 - [API Cookbook](../api-cookbook.md)
@@ -219,7 +218,6 @@
 - [Index Usage Analysis and Recommendations](../index-analysis.md)
 - [Index Maintenance Guide](../index-maintenance.md)
 - [Query Result Caching & Cache Invalidation](../query-caching.md)
-- [PostgreSQL Query Plan Caching](../QUERY_PLAN_CACHING.md)
 - [Query Plan Caching and Tuning](../query-plan-tuning.md)
 - [Query Profiler](../query-profiler.md)
 - [Database Statistics Auto-Analysis Configuration](../statistics-auto-analysis.md)
@@ -228,7 +226,6 @@
 - [Data Retention Policy](../data-retention.md)
 - [Multi-Tier Data Retention](../data-retention-tiers.md)
 - [Serialization Caching](../serialization-caching.md)
-- [JSON Serialization Optimization](../SERIALIZATION_OPTIMIZATION.md)
 - [Bloom Filter Deduplication Memory Management](../dedup-memory-management.md)
 
 ### Security and Compliance
@@ -310,7 +307,22 @@
   - [0002 — Single-writer indexing with monitored read replicas](../adr/0002-multi-replica-indexing.md)
   - [0003 — Layered retry, backoff, and circuit breaking for webhook delivery](../adr/0003-webhook-retry-strategy.md)
   - [0004 — Optional gzip compression for stored event data](../adr/0004-event-compression.md)
+  - [0005 — Axum as the HTTP web framework](../adr/0005-web-framework.md)
+  - [0006 — Canonical frontend](../adr/0006-canonical-frontend.md)
+  - [0007 — SDK packaging and distribution](../adr/0007-sdk-packaging.md)
+  - [0008 — Tenancy model](../adr/0008-tenancy-model.md)
+  - [0009 — Lua scripting sandbox for transforms](../adr/0009-scripting-sandbox.md)
+  - [0010 — Event storage and partitioning strategy](../adr/0010-event-storage-partitioning.md)
+  - [0011 — Telemetry stack](../adr/0011-telemetry-stack.md)
+  - [0012 — Feature-flag strategy](../adr/0012-feature-flag-strategy.md)
+  - [0013 — Aggregation merge](../adr/0013-aggregation-merge.md)
+  - [0014 — Cargo workspace layout](../adr/0014-cargo-workspace.md)
+  - [0015 — Connection pool consolidation](../adr/0015-connection-pool-consolidation.md)
   - [ADR review guidelines](../adr/review-guidelines.md)
+
+### Development
+
+- [CI Workflow Overview](../development/ci.md)
 
 ### Testing
 
@@ -337,17 +349,13 @@
 
 ### Engineering Plans
 
-- [Engineering Plans](../design/README.md)
-  - [Aggregation Merge Plan](../design/aggregation-merge-plan.md)
-  - [Cargo Workspace Plan](../design/cargo-workspace-plan.md)
-  - [Connection Pool Consolidation](../design/connection-pool-consolidation.md)
-  - [Feature Gate Plan](../design/feature-gate-plan.md)
-  - [Handler Split Plan](../design/handler-split-plan.md)
-  - [Module Pruning Audit](../design/module-pruning-audit.md)
-  - [Router Consolidation](../design/router-consolidation.md)
-  - [Schema Audit — SorobanPulse](../design/schema-audit.md)
-  - [Typed Error Migration](../design/typed-error-migration.md)
-  - [Unified Query Builder Pattern](../design/query-builder-pattern.md)
+- [Feature Gate Plan](../feature-gate-plan.md)
+- [Handler Split Plan](../handler-split-plan.md)
+- [Module Pruning Audit](../module-pruning-audit.md)
+- [Router Consolidation](../router-consolidation.md)
+- [Schema Audit — SorobanPulse](../schema-audit.md)
+- [Typed Error Migration](../typed-error-migration.md)
+- [Unified Query Builder Pattern](../query-builder-pattern.md)
 
 ### Design Specs / RFCs
 
@@ -359,12 +367,11 @@
 
 ### Pull Request Notes
 
-- [Pull Request Notes](../archive/pr/README.md)
-  - [Chideraisiguzor 1137 1140](../archive/pr/chideraisiguzor-1137-1140.md)
-  - [Misrasamuelisiguzor Oss 1121 1124](../archive/pr/misrasamuelisiguzor-oss-1121-1124.md)
-  - [Samuelisi 1133 1136](../archive/pr/samuelisi-1133-1136.md)
-  - [Spotkorner Dot 1125 1128](../archive/pr/spotkorner-dot-1125-1128.md)
-  - [Techisigu 1129 1132](../archive/pr/techisigu-1129-1132.md)
+- [Chideraisiguzor 1137 1140](../pr/chideraisiguzor-1137-1140.md)
+- [Misrasamuelisiguzor Oss 1121 1124](../pr/misrasamuelisiguzor-oss-1121-1124.md)
+- [Samuelisi 1133 1136](../pr/samuelisi-1133-1136.md)
+- [Spotkorner Dot 1125 1128](../pr/spotkorner-dot-1125-1128.md)
+- [Techisigu 1129 1132](../pr/techisigu-1129-1132.md)
 
 ## Reference
 

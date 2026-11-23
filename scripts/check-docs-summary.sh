@@ -85,7 +85,8 @@ mapfile -t sorted_links < <(printf '%s\n' "${normalised_links[@]}" | sort -u)
 orphans=()
 for doc in "${all_docs[@]}"; do
     # SUMMARY.md itself is the index and is never listed within itself.
-    if [[ "${doc}" == "${SUMMARY_FILE}" ]]; then
+    # Skip navigation files (docs/SUMMARY.md, docs/site/SUMMARY.md).
+    if [[ "$(basename "${doc}")" == "SUMMARY.md" ]]; then
         continue
     fi
     found=0
