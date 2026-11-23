@@ -13,9 +13,10 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 soroban-pulse = { path = "..", features = [] }
 serde_json = "1"
-# Inherit the single workspace-wide stellar-xdr version so fuzz targets decode
-# XDR identically to the library and CLI (see issue #1420).
-stellar-xdr = { workspace = true }
+# Pinned to the same stellar-xdr version/features as the root crate so fuzz
+# targets decode XDR identically to the library (see issue #1420). The fuzz
+# crate is its own `[workspace]`, so `workspace = true` cannot be used here.
+stellar-xdr = { version = "26.0.1", default-features = false, features = ["std", "curr", "base64", "serde"] }
 
 # Prevent this from interfering with the workspace
 [workspace]

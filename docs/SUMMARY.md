@@ -62,7 +62,6 @@
 
 - [AWS SQS Integration](sqs-integration.md)
 - [Azure Event Hubs Integration](event-hubs-integration.md)
-- [Cross-Chain Correlation](cross_chain_correlation.md)
 - [Lua Event Transformation](lua-transformation.md)
 - [Streaming Responses](STREAMING_RESPONSES.md)
 
@@ -86,7 +85,6 @@
 
 - [Logging](logging.md)
 - [Log Aggregation](log-aggregation.md)
-- [Audit Logging](audit_logging.md)
 - [Rate Limiting](rate_limiting.md)
 - [Performance Tuning](performance-tuning.md)
 - [Performance Regression Testing](performance-regression-testing.md)
@@ -100,11 +98,9 @@
 
 # Testing & Quality
 
-- [API Contract Testing](api-contract-testing.md)
 - [API Compatibility Testing](api-compatibility-testing.md)
 - [Contract Testing](contract-testing.md)
 - [Property-Based Testing](property-based-testing.md)
-- [Property Testing](property-testing.md)
 - [Mutation Testing](mutation-testing.md)
 - [Backup Verification](backup-verification.md)
 
@@ -114,6 +110,8 @@
 
 - [Multi-Tenancy](multi-tenancy.md)
 - [Multi-Deployment Architecture](multi-deployment-architecture.md)
+- [SaaS Platform (Experimental)](SAAS_PLATFORM.md)
+- [ML Integration (Experimental)](ML_INTEGRATION.md)
 - [Feature Flag Rollback](feature-flag-rollback.md)
 
 ---
@@ -161,6 +159,10 @@
 
 ---
 
+# Project
+
+- [Feature Maturity](feature-maturity.md)
+
 # Reference
 
 - [Frequently Asked Questions (Issue #999)](FAQ.md)
@@ -190,7 +192,6 @@
 - [Cursor (Keyset) Pagination](cursor-pagination.md)
 - [Web dashboard](dashboard.md)
 - [Data Quality Monitoring](data-quality-monitoring.md)
-- [Multi-Tier Data Retention](data-retention-tiers.md)
 - [Data Warehouse Export](data-warehouse.md)
 - [Database Configuration Tuning (Issue #824)](database-configuration-tuning.md)
 - [Webhook Dead-Letter Replay](dead-letter-replay.md)
