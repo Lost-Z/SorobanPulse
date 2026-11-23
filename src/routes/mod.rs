@@ -801,6 +801,13 @@ pub fn create_router_with_tx_and_tenant_map(
 }
 
 /// Issue #683: GraphQL API routes (requires `graphql` feature)
+///
+/// **Status: Experimental (issue #1484).** The GraphQL API is not yet wired
+/// up: without the `graphql` feature this returns an empty router, and even
+/// with the feature enabled only the WebSocket subscription endpoint is
+/// registered — there is no query/mutation schema served. Do not rely on
+/// GraphQL for production use. See `docs/feature-maturity.md` for the
+/// authoritative maturity status of this and other subsystems.
 fn graphql_routes() -> Router<AppState> {
     #[cfg(feature = "graphql")]
     {
@@ -813,6 +820,8 @@ fn graphql_routes() -> Router<AppState> {
     }
     #[cfg(not(feature = "graphql"))]
     {
+        // Experimental / not wired up (issue #1484): no GraphQL routes are
+        // registered unless the `graphql` feature is enabled.
         Router::new()
     }
 }
