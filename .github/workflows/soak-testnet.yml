@@ -131,15 +131,32 @@ jobs:
 
           # Give the service 30 s to initialise and run migrations.
           echo "Waiting for service to start..."
-          for i in $(seq 1 30); do
+          READY=0
+          for i in $(seq 1 120); do
             if curl -sf http://localhost:3000/healthz/ready >/dev/null 2>&1; then
               echo "Service is ready after ${i}s"
+              READY=1
               break
+            fi
+            if ! kill -0 "$APP_PID" 2>/dev/null; then
+              echo "::error::Service exited during startup"
+              tail -50 /tmp/soak-app.log || true
+              exit 1
             fi
             sleep 1
           done
+          if [ "$READY" != "1" ]; then
+            echo "::error::Service did not become ready within 120s"
+            tail -50 /tmp/soak-app.log || true
+            exit 1
+          fi
 
-          # Record baseline memory RSS (kB → bytes).
+          # Let caches, connection pools and the first backfill batch settle so
+          # the baseline reflects steady state rather than a cold process
+          # (Issue #1398: cold baselines tripped the 1.5x memory assertion).
+          sleep 60
+
+          # Record baseline memory RSS (kB).
           BASELINE_RSS=$(ps -o rss= -p "$APP_PID" | tr -d '[:space:]')
           echo "baseline_rss=${BASELINE_RSS}" >> "$GITHUB_OUTPUT"
           echo "Baseline RSS: ${BASELINE_RSS} kB"
@@ -153,14 +170,16 @@ jobs:
           curl -sf http://localhost:3000/metrics > /tmp/soak-metrics.txt || echo "metrics unavailable"
 
           # ── Check lag ────────────────────────────────────────────────────
-          LAG=$(grep 'soroban_pulse_indexer_lag_ledgers ' /tmp/soak-metrics.txt \
-                | awk '{print $2}' | head -1 || echo "0")
+          # Match both labelled and unlabelled series; take the max lag.
+          LAG=$(grep -E '^soroban_pulse_indexer_lag_ledgers(\{[^}]*\})? ' /tmp/soak-metrics.txt \
+                | awk 'BEGIN{m=""} {if (m=="" || $2>m) m=$2} END{print m}' || true)
           echo "lag_ledgers=${LAG}" >> "$GITHUB_OUTPUT"
           echo "Indexer lag: ${LAG} ledgers"
 
           # ── Check event count ────────────────────────────────────────────
-          EVENT_COUNT=$(grep 'soroban_pulse_events_indexed_total ' /tmp/soak-metrics.txt \
-                        | awk '{print $2}' | head -1 || echo "0")
+          # Sum across label sets (per-contract / per-type series).
+          EVENT_COUNT=$(grep -E '^soroban_pulse_events_indexed_total(\{[^}]*\})? ' /tmp/soak-metrics.txt \
+                        | awk '{s+=$2} END{printf "%d", s}' || echo "0")
           echo "event_count=${EVENT_COUNT}" >> "$GITHUB_OUTPUT"
           echo "Events indexed: ${EVENT_COUNT}"
 
@@ -194,7 +213,7 @@ jobs:
         run: |
           COUNT="${{ steps.soak.outputs.event_count }}"
           echo "Events indexed: ${COUNT}"
-          if [ -z "${COUNT}" ] || [ "${COUNT}" = "0" ]; then
+          if [ -z "${COUNT}" ] || ! awk "BEGIN { exit !(${COUNT} > 0) }"; then
             echo "::error::No events were indexed during the soak run"
             exit 1
           fi
